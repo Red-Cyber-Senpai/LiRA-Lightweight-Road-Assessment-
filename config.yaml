@@ -1,0 +1,24 @@
+# LiRA (Light-weight Road Assessment) Configuration
+# Developed by: Saketcharan Chauhan M & Abubakr Siddiq Mohammed
+
+system:
+  name: "LiRA"
+  version: "1.0.0"
+  debug: false
+
+detection_thresholds:
+  pothole_z_axis: 2.5
+  smooth_road_z_axis: 0.5
+  confidence_min: 0.7
+
+model_paths:
+  yolo_model: "models/yolov8-pothole.pt"
+  rf_model: "models/random_forest_road.joblib"
+
+data_sources:
+  sensor_url: "http://0.0.0.0:5000/data"
+  roboflow_url: "YOUR_ROBOFLOW_URL"
+
+logging:
+  enabled: true
+  file: "logs/lira_system.log"
