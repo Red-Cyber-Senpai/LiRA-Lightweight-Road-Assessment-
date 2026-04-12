@@ -6,70 +6,76 @@ Description: Flask-based API for receiving and monitoring road condition sensor 
 Copyright (c) 2026 Saketcharan Chauhan M & Abubakr Siddiq Mohammed. All rights reserved.
 """
 
-import requests
-import matplotlib.pyplot as plt
-import numpy as np
 import threading
 import time
+import yaml
 from flask import Flask, request, jsonify
 
-# Flask app to receive HTTP POST requests
-app = Flask(__name__)
+# LiRA Custom Modules
+from detection_logic import RoadDetectionEngine
+from gps_handler import GPSHandler
+import dataprocessing
 
-# Data storage for received sensor data
+# Load Configuration
+with open("config.yaml", "r") as f:
+    config = yaml.safe_load(f)
+
+# Initialize Engines
+detection_cfg = config['detection']
+engine = RoadDetectionEngine(
+    pothole_threshold=detection_cfg['pothole_variance_threshold'],
+    smooth_threshold=detection_cfg['smooth_variance_threshold'],
+    window_size=detection_cfg['window_size']
+)
+gps = GPSHandler()
+
+app = Flask(__name__)
 sensor_data = []
 
-# Function to receive sensor data via HTTP POST
 @app.route('/data', methods=['POST'])
 def receive_sensor_data():
     global sensor_data
     try:
-        data = request.json  # Assuming the data is sent in JSON format
-        if data:  # Ensure data is not empty
-            sensor_data.append(data)  # Store the received data
+        data = request.json
+        if data:
+            sensor_data.append(data)
             return jsonify({"status": "success", "message": "Data received"}), 200
-        else:
-            return jsonify({"status": "failure", "message": "No data received"}), 400
+        return jsonify({"status": "failure", "message": "No data"}), 400
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# Function to detect road conditions based on sensor data
 def detect_road_conditions():
     global sensor_data
     while True:
         if sensor_data:
-            latest_data = sensor_data[-1]  # Get the latest sensor data
-
-            # Analyze accelerometer data for road conditions
+            latest_data = sensor_data[-1]
             accelerometer_data = next((item for item in latest_data if item.get('name') == 'accelerometer'), None)
             
             if accelerometer_data:
-                acc_x = accelerometer_data['values'].get('x', 0)
-                acc_y = accelerometer_data['values'].get('y', 0)
                 acc_z = accelerometer_data['values'].get('z', 0)
+                
+                # Use Advanced Detection Engine
+                condition = engine.process_reading(acc_z)
+                current_loc = gps.get_location_string()
 
-                # Define threshold for detecting road conditions (adjust these based on your testing)
-                pothole_threshold = 2.5  # A larger vertical spike likely indicates a pothole
-                smooth_road_threshold = 0.5  # A low z-axis value indicates smooth road
+                print(f"[{current_loc}] Current Road State: {condition}")
 
-                # Condition detection based on z-axis (vertical acceleration)
-                if abs(acc_z) > pothole_threshold:
-                    print(f"Alert: Pothole detected with z-acceleration: {acc_z}")
-                elif abs(acc_z) < smooth_road_threshold:
-                    print("Road condition: Smooth")
-                else:
-                    print("Road condition: Normal")
+                # Logging and CSV Export
+                if config['data_handling']['logging_enabled']:
+                    dataprocessing.log_detection(condition, current_loc, config['data_handling']['log_file'])
+                
+                if config['data_handling']['csv_export_enabled']:
+                    dataprocessing.export_to_csv({
+                        "condition": condition,
+                        "z_variance": round(float(engine.z_buffer[-1]), 4) if engine.z_buffer else 0,
+                        "location": current_loc
+                    }, config['data_handling']['csv_file'])
 
-            else:
-                print("No accelerometer data found in the latest reading.")
+        time.sleep(1.0 / detection_cfg['sampling_rate_hz'])
 
-        time.sleep(2)  # Delay to prevent overwhelming the output
-
-# Start Flask app in a separate thread
 def run_flask_app():
-    app.run(host='0.0.0.0', port=5000, debug=False)  # Run on port 5000
+    app.run(host='0.0.0.0', port=5000, debug=False)
 
-# Start the Flask app and the road condition detection
 if __name__ == '__main__':
-    threading.Thread(target=run_flask_app).start()  # Start Flask app in a new thread
-    detect_road_conditions()  # Start detecting road conditions
+    threading.Thread(target=run_flask_app).start()
+    detect_road_conditions()

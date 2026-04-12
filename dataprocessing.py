@@ -1,10 +1,41 @@
 """
 LiRA (Light-weight Road Assessment) - Data Processing Module
 Developed by: Saketcharan Chauhan M & Abubakr Siddiq Mohammed
-Description: Functions for filtering noise from accelerometer data and preparing images for YOLO.
+Description: Functions for filtering noise, preparing images, and logging results.
 """
 
 import numpy as np
+import datetime
+import csv
+import os
+
+def log_detection(condition, location="Unknown", log_file="logs/lira_system.log"):
+    """
+    Logs a detection event with a timestamp.
+    """
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    log_entry = f"[{timestamp}] {condition} at {location}\n"
+    
+    with open(log_file, "a") as f:
+        f.write(log_entry)
+    print(f"Logged: {log_entry.strip()}")
+
+def export_to_csv(data_dict, csv_file="data/road_assessment_log.csv"):
+    """
+    Exports a dictionary of data to a CSV file for analytical assessment.
+    """
+    file_exists = os.path.isfile(csv_file)
+    fields = ["timestamp", "condition", "z_variance", "location"]
+    
+    # Adding timestamp if not present
+    if "timestamp" not in data_dict:
+        data_dict["timestamp"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    with open(csv_file, "a", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fields)
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow(data_dict)
 
 def filter_vibration_noise(data, threshold=0.1):
     """

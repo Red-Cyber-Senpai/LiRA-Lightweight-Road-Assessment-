@@ -14,17 +14,20 @@
 The **LiRA (Light-weight Road Assessment)** Project is an intelligent road condition monitoring system designed to detect potholes, rough roads, and smooth road surfaces. By leveraging a combination of **Sensor-based Machine Learning** and **Image-based Artificial Intelligence**, LiRA provides a highly reliable and cost-effective solution for infrastructure maintenance and smart city transportation.
 
 ## 🚀 Key Features
-- **Dual-Validation Detection:** Combines Accelerometer data and Computer Vision (YOLOv8) for high-accuracy results.
-- **Real-Time Processing:** Designed for deployment on low-cost hardware and edge devices.
-- **Predictive Maintenance:** Helps city authorities identify road damage before it becomes severe.
-- **Modular Architecture:** Easy to scale and integrate with autonomous vehicle systems.
+- **Advanced Dual-Validation:** Combines Vertical Variance Analysis (Sliding Window Standard Deviation) for precision and YOLOv8 for visual confirmation.
+- **Centralized Management:** Full system control via `config.yaml`.
+- **GPS Integration:** Integrated location handling for mapping road defects.
+- **Automated Reporting:** Real-time log file generation and CSV data export for analytical assessment.
+- **Modular Architecture:** Clean separation of detection, processing, and hardware interfacing.
 
 ## 🛠 Technology Stack
-- **Language:** Python 3.x
-- **Machine Learning:** Scikit-learn, NumPy, Pandas, Joblib
+- **Language:** Python 3.9+
+- **Configuration:** PyYAML
+- **Algorithms:** NumPy-based Variance Analysis
+- **Machine Learning:** Scikit-learn, Joblib
 - **Computer Vision:** OpenCV, Ultralytics YOLOv8
 - **Framework:** Flask (Web Interface)
-- **Hardware Support:** Smartphones, Edge Devices, Embedded Systems
+- **Data Handling:** CSV, Logging
 
 ## 📂 Project Structure
 ```text

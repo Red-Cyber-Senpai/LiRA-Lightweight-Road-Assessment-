@@ -6,19 +6,22 @@ system:
   version: "1.0.0"
   debug: false
 
-detection_thresholds:
-  pothole_z_axis: 2.5
-  smooth_road_z_axis: 0.5
-  confidence_min: 0.7
+detection:
+  pothole_variance_threshold: 1.5   # Standard deviation threshold for potholes
+  smooth_variance_threshold: 0.2    # Standard deviation threshold for smooth road
+  window_size: 10                   # Number of samples for sliding window analysis
+  sampling_rate_hz: 5               # Ideal frequency for sensor polling
 
 model_paths:
   yolo_model: "models/yolov8-pothole.pt"
   rf_model: "models/random_forest_road.joblib"
 
+data_handling:
+  csv_export_enabled: true
+  csv_file: "data/road_assessment_log.csv"
+  logging_enabled: true
+  log_file: "logs/lira_system.log"
+
 data_sources:
   sensor_url: "http://0.0.0.0:5000/data"
   roboflow_url: "YOUR_ROBOFLOW_URL"
-
-logging:
-  enabled: true
-  file: "logs/lira_system.log"
